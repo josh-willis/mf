@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2014 Josh Willis
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import multibench
+import cProfile
+from mf.thresh_cluster import valid_methods, parse_problem
+import sys, argparse, math
+from scipy import mean, std
+from numpy import array
+from pycbc import scheme, fft
+
+parser = argparse.ArgumentParser(description = "Benchmark combined thresholding and clustering")
+
+parser.add_argument("--problem",
+                    help = "String describing the problem to benchmark, in the form"
+                    " <size>.")
+parser.add_argument("--long-output",
+                    help = "Give a verbose, explanatory output for the results."
+                    " Otherwise, print <problem> <plan_time> <min> <mean> <max> <stdev>"
+                    " <throughput> in that order",
+                    action="store_true")
+parser.add_argument("--method",
+                    help = "Which threshhold method to use",
+                    choices = valid_methods,
+                    default = valid_methods[0])
+parser.add_argument('--profile-outfile',
+                    help = "File to which to write PStats output",
+                    default=None)
+
+# Now call functions to parse arguments from modules
+multibench.insert_timing_option_group(parser)
+scheme.insert_processing_option_group(parser)
+
+# And parse
+opt = parser.parse_args()
+
+# Check that the values returned for the options make sense
+scheme.verify_processing_options(opt, parser)
+
+# Do what we can with command line options
+ctx = scheme.from_cli(opt)
+
+prob_class, size = parse_problem(opt.problem, opt.method)
+
+with ctx:
+    # Create the problem instance:
+    ourprob = prob_class(size)
+    # Find the planning time:
+    ourprob.setup()
+    setup_time = ourprob.setup_time
+    # Find the needed number of repetitions:
+    nexecute = ourprob.needed_n(opt.mbench_time)
+    nrepeats = opt.mbench_repeats
+    try:
+        ncores = ctx.num_threads
+    except AttributeError:
+        ncores = 1
+    # Now use the Timer (imported by multibench from timeit) class
+    # to make our measurements
+    t = multibench.Timer(ourprob.execute)
+    if opt.profile_outfile is not None:
+        prof = cProfile.Profile()
+        args = [nrepeats, nexecute]
+        timings_array = prof.runcall(t.repeat, *args)
+        prof.dump_stats(opt.profile_outfile)
+    else:
+        timings_array = t.repeat(repeat=nrepeats, number=nexecute)
+
+timings_array = array(timings_array)
+timings_array = timings_array/float(nexecute)
+meanval = mean(timings_array)
+minval = min(timings_array)
+maxval = max(timings_array)
+stdval = std(timings_array)
+# The following should be *per core*
+throughput = size/(meanval*ncores)
+
+if opt.long_output:
+    mean_str, min_str, max_str, std_str = multibench.format_time_strings([meanval, minval, maxval, stdval])
+    print("Problem: {0}, setup: {1:g} s, mean time: {2},"
+          " throughput/core: {3:g}".format(
+            opt.problem, setup_time, mean_str, throughput))
+    print("    min time: {0}, max time: {1}, std. dev: {2}\n".format(min_str, max_str, std_str))
+else:
+    print("{0} {1} {2:g} {3} {4} {5} {6} {7:g}".format(opt.problem, opt.method, setup_time, 
+                                                       minval, meanval, 
+                                                       maxval, stdval, throughput))
