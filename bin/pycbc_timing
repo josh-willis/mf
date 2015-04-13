@@ -46,6 +46,11 @@ parser.add_argument('--enable-profiling',
                     help = "Enable profiling without specifying an output file;"
                     " the file name will be 'probstring'_'method'.pstats",
                     action = "store_true")
+parser.add_argument('--clear-cache',
+                    help = "Read and write an array at least four times the size of the"
+                    " last-level cache before each timing loop, and recreate the problem"
+                    " instance with new memory allocation before each timing loop.",
+                    action = "store_true")
 
 # Now call functions to parse arguments from modules
 multibench.insert_timing_option_group(parser)
@@ -90,20 +95,24 @@ with ctx:
         timings_array = prof.runcall(t.repeat, *args)
         prof.dump_stats(opt.profile_outfile)
     else:
-        timings_array = []
-        for i in range(0, nrepeats):
-            del ourprob
-            tmparr = zeros(20000000, dtype = float32)
-            tmparr.fill(1.0)
-            del tmparr
-            ourprob = prob_class(size)
-            ourprob.setup()
-            ourprob.execute()
+        if opt.clear_cache:        
+            timings_array = []
+            for i in range(0, nrepeats):
+                del ourprob
+                tmparr = zeros(20000000, dtype = float32)
+                tmparr.fill(1.0)
+                del tmparr
+                ourprob = prob_class(size)
+                ourprob.setup()
+                ourprob.execute()
+                t = multibench.Timer(ourprob.execute)
+                new_time = t.repeat(repeat=1, number=nexecute)
+                del t
+                timings_array.append(new_time[0])
+        else:
             t = multibench.Timer(ourprob.execute)
-            new_time = t.repeat(repeat=1, number=nexecute)
-            del t
-            timings_array.append(new_time[0])
-         
+            timings_array = t.repeat(repeat=nrepeats, number=nexecute)
+
 
 timings_array = array(timings_array)
 timings_array = timings_array/float(nexecute)

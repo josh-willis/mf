@@ -45,6 +45,11 @@ parser.add_argument('--enable-profiling',
                     help = "Enable profiling without specifying an output file;"
                     " the file name will be 'probstring'_'method'.pstats",
                     action = "store_true")
+parser.add_argument('--clear-cache',
+                    help = "Read and write an array at least four times the size of the"
+                    " last-level cache before each timing loop, and recreate the problem"
+                    " instance with new memory allocation before each timing loop.",
+                    action = "store_true")
 
 # Now call functions to parse arguments from modules
 multibench.insert_timing_option_group(parser)
