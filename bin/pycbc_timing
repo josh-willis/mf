@@ -98,6 +98,7 @@ with ctx:
             del tmparr
             ourprob = prob_class(size)
             ourprob.setup()
+            ourprob.execute()
             t = multibench.Timer(ourprob.execute)
             new_time = t.repeat(repeat=1, number=nexecute)
             del t
