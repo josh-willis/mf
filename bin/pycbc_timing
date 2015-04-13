@@ -135,7 +135,7 @@ else:
                                                        maxval, stdval, throughput))
 
 if hasattr(opt, "fft_backends"):
-    if len(opt.fft_backends > 1):
+    if len(opt.fft_backends) > 1:
         if (opt.fft_backends[0] == 'fftw'):
             # We know we gave FFTW parameters on the command line
             if opt.fftw_output_float_wisdom_file:
