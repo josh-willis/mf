@@ -176,6 +176,27 @@ class NewThresh(BaseProblem):
     def execute(self):
         self.threshold_and_clusterer.threshold_and_cluster(self.threshold)
 
+class NewNewThresh(BaseProblem):
+    def __init__(self, size):
+        super(NewNewThresh, self).__init__(size)
+        self.ht_np = _np.array(self.ht.data[:self.size/2], copy = False)
+        self.st_np = _np.array(self.st.data[:self.size/2], copy = False)
+        self.qt_np = _np.array(self.qt.data[:self.size/2], copy = False)
+        self.snr_np = _np.array(self.snr.data[self.analyze], copy = False)
+        self.correlator = Correlator(self.ht_np, self.st_np, self.qt_np)
+        self.fftobj = IFFT(self.qt, self.snr)
+        self.threshold_and_clusterer = ThresholdCluster(self.snr_np)
+
+    def _setup(self):
+        self.fftobj._setup()
+        self.correlator.correlate()
+        self.fftobj.execute()
+        self.threshold = get_one_thresh(self.snr)
+        self.execute()
+
+    def execute(self):
+        self.threshold_and_clusterer.threshold_and_cluster(self.threshold, global_winsize)
+
 class OldFFTThresh(BaseProblem):
     def __init__(self, size):
         super(OldFFTThresh, self).__init__(size)
@@ -325,6 +346,7 @@ _class_dict = { 'corr_old' : CorrOld,
                 'corr_fft_new' : NewCorrFFT,
                 'thresh_old' : OldThresh,
                 'thresh_new' : NewThresh,
+                'thresh_new_new' : NewNewThresh,
                 'fft_thresh_old' : OldFFTThresh,
                 'fft_thresh_new' : NewFFTThresh,
                 'all_old' : OldAll,
