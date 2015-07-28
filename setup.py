@@ -71,6 +71,7 @@ setup (
                'bin/execute_fixed_plain',
                'bin/thresh_timing',
                'bin/pycbc_timing',
-               'bin/pycbc_dummy'
+               'bin/pycbc_dummy',
+               'bin/print_fftw_libs'
         ]
     )
