@@ -15,7 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import multibench as _mb
-from pycbc.types import zeros, complex64, float32, Array
+from pycbc.types import zeros, complex64, float32, complex128, float64
 from pycbc import scheme as _scheme
 from pycbc.filter.matchedfilter import Correlator
 from pycbc.events import ThresholdCluster
@@ -26,7 +26,7 @@ from numpy.random import random
 import ctypes
 from pycbc import libutils
 import pycbc.fft
-from pycbc.fft import IFFT, ifft
+from pycbc.fft import IFFT, ifft, FFT, fft
 import pycbc.fft.fftw as _fftw
 
 
@@ -35,12 +35,6 @@ This module benchmarks old and new versions of various pycbc matched
 filtering components.
 """
 
-# Some things to set up our FFT
-libfftw3f = _fftw.float_lib
-
-fexecute = libfftw3f.fftwf_execute_dft
-fexecute.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-
 class IFFT(object):
     def __init__(self, invec, outvec):
         self.obj = pycbc.fft.IFFT(invec, outvec)
@@ -48,6 +42,23 @@ class IFFT(object):
 
     def _setup(self):
         self.execute()
+
+class FFT(object):
+    def __init__(self, invec, outvec):
+        self.obj = pycbc.fft.FFT(invec, outvec)
+        self.execute = self.obj.execute
+
+    def _setup(self):
+        self.execute()
+
+class BaseFFTProblem(_mb.MultiBenchProblem):
+    def __init__(self, size, dtype):
+        if (size < 1):
+            raise ValueError("size must be >= 1")
+        self.size = size
+        self.dtype = dtype
+        self.invec = zeros(self.size, dtype=self.dtype)
+        self.outvec = zeros(self.size, dtype=self.dtype)
 
 class BaseProblem(_mb.MultiBenchProblem):
     def __init__(self, size):
@@ -99,6 +110,34 @@ class FFTNew(BaseProblem):
     def __init__(self, size):
         super(FFTNew, self).__init__(size)
         self.fftobj = IFFT(self.qt, self.snr)
+        self.execute = self.fftobj.execute
+        self._setup = self.fftobj._setup
+
+class FFTSingle(BaseFFTProblem):
+    def __init__(self, size):
+        super(FFTSingle, self).__init__(size, dtype=complex64)
+        self.fftobj = FFT(self.invec, self.outvec)
+        self.execute = self.fftobj.execute
+        self._setup = self.fftobj._setup
+
+class FFTDouble(BaseFFTProblem):
+    def __init__(self, size):
+        super(FFTDouble, self).__init__(size, dtype=complex128)
+        self.fftobj = FFT(self.invec, self.outvec)
+        self.execute = self.fftobj.execute
+        self._setup = self.fftobj._setup
+
+class IFFTSingle(BaseFFTProblem):
+    def __init__(self, size):
+        super(IFFTSingle, self).__init__(size, dtype=complex64)
+        self.fftobj = IFFT(self.invec, self.outvec)
+        self.execute = self.fftobj.execute
+        self._setup = self.fftobj._setup
+
+class IFFTDouble(BaseFFTProblem):
+    def __init__(self, size):
+        super(IFFTDouble, self).__init__(size, dtype=complex128)
+        self.fftobj = IFFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
         self._setup = self.fftobj._setup
 
@@ -341,6 +380,10 @@ class NewAllMany(BaseManyProblem):
 _class_dict = { 'corr_old' : CorrOld,
                 'corr_new' : CorrNew,
                 'fft_old' : FFTOld,
+                'fft_single' : FFTSingle,
+                'fft_double' : FFTDouble,
+                'ifft_single' : IFFTSingle,
+                'ifft_double' : IFFTDouble,
                 'fft_new' : FFTNew,
                 'corr_fft_old' : OldCorrFFT,
                 'corr_fft_new' : NewCorrFFT,
@@ -360,7 +403,7 @@ valid_methods = _class_dict.keys()
 def parse_problem(probstring, method='corr_old'):
     """
     This function takes a string of the form <number>, and
-    another argument indicating which class type to return. 
+    another argument indicating which class type to return.
 
     It returns the class and size, so that the call:
         MyClass, n  = parse_problem(probstring, method)
