@@ -19,7 +19,7 @@ from pycbc.types import zeros, complex64, float32, complex128, float64
 from pycbc import scheme as _scheme
 from pycbc.filter.matchedfilter import Correlator
 from pycbc.events import ThresholdCluster
-from pycbc.filter.matchedfilter_cpu import correlate_parallel, correlate_inline
+from pycbc.filter.matchedfilter_cpu import correlate_inline
 from pycbc.events.threshold_cpu import threshold_inline
 import numpy as _np
 from numpy.random import random
