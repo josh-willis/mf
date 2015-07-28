@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2014 Josh Willis
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+from pycbc.fft import fftw
+import argparse
+
+parser = argparse.ArgumentParser(description = "Print paths to FFTW libraries in use by PyCBC")
+
+parser.add_argument("--fftw-threads-backend",
+                    help = "String giving the threading backend to use",
+                    type=str, choices=['openmp', 'pthreads', 'unthreaded'],
+                    default='unthreaded')
+
+# Parse
+opt = parser.parse_args()
+
+fftw.set_threads_backend(opt.fftw_threads_backend)
+
+print "Float FFTW library: {0}".format(fftw.float_lib._name)
+print "Double FFTW library: {0}".format(fftw.double_lib._name)
+
+if fftw._threads_backend is not 'unthreaded':
+    print "Float threading library: {0}".format(fftw._float_threaded_lib._name)
+    print "Double threading library: {0}".format(fftw._double_threaded_lib._name)
