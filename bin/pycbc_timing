@@ -95,7 +95,7 @@ with ctx:
         timings_array = prof.runcall(t.repeat, *args)
         prof.dump_stats(opt.profile_outfile)
     else:
-        if opt.clear_cache:        
+        if opt.clear_cache:
             timings_array = []
             for i in range(0, nrepeats):
                 del ourprob
@@ -130,12 +130,12 @@ if opt.long_output:
             opt.problem, setup_time, mean_str, throughput))
     print("    min time: {0}, max time: {1}, std. dev: {2}\n".format(min_str, max_str, std_str))
 else:
-    print("{0} {1} {2:g} {3} {4} {5} {6} {7:g}".format(opt.problem, opt.method, setup_time, 
-                                                       minval, meanval, 
+    print("{0} {1} {2:g} {3} {4} {5} {6} {7:g}".format(opt.problem, opt.method, setup_time,
+                                                       minval, meanval,
                                                        maxval, stdval, throughput))
 
 if hasattr(opt, "fft_backends"):
-    if len(opt.fft_backends) > 1:
+    if len(opt.fft_backends) > 0:
         if (opt.fft_backends[0] == 'fftw'):
             # We know we gave FFTW parameters on the command line
             if opt.fftw_output_float_wisdom_file:
