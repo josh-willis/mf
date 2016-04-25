@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2014 Josh Willis
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import multibench
+import cProfile
+from mf.benchmark_waveform import valid_waveforms, parse_problem
+import sys, argparse, math
+from scipy import mean, std
+from numpy import array
+from pycbc import scheme, fft
+
+parser = argparse.ArgumentParser(description = "Benchmark various pycbc waveforms")
+
+parser.add_argument("--waveform",
+                    help = "String the waveform to benchmark.",
+                    choices = valid_waveforms,
+                    default = valid_waveforms[0])
+parser.add_argument("--long-output",
+                    help = "Give a verbose, explanatory output for the results."
+                    " Otherwise, print <waveform> <sample_rate> <segment_length>"
+                    " <plan_time> <min> <mean> <max> <stdev>"
+                    " <throughput> in that order",
+                    action="store_true")
+parser.add_argument("--sample-rate",
+                    help = "sample rate (in Hz) to use",
+                    type=int, default=4096)
+parser.add_argument("--segment-length",
+                    help="length of analysis segment (in seconds) to use",
+                    type=int, default=256)
+parser.add_argument('--profile-outfile',
+                    help = "File to which to write PStats output",
+                    default=None)
+parser.add_argument('--enable-profiling',
+                    help = "Enable profiling without specifying an output file;"
+                    " the file name will be 'probstring'_'method'.pstats",
+                    action = "store_true")
+parser.add_argument('--clear-cache',
+                    help = "Read and write an array at least four times the size of the"
+                    " last-level cache before each timing loop, and recreate the problem"
+                    " instance with new memory allocation before each timing loop.",
+                    action = "store_true")
+
+# Now call functions to parse arguments from modules
+multibench.insert_timing_option_group(parser)
+scheme.insert_processing_option_group(parser)
+fft.insert_fft_option_group(parser)
+
+# And parse
+opt = parser.parse_args()
+
+# Check that the values returned for the options make sense
+scheme.verify_processing_options(opt, parser)
+fft.verify_fft_options(opt, parser)
+
+# Do what we can with command line options
+ctx = scheme.from_cli(opt)
+
+if opt.enable_profiling:
+    opt.profile_outfile = opt.waveform + '_' + str(opt.sample_rate) + '_' + str(opt.segment_size) + '.pstats'
+
+prob_class = parse_problem(opt.waveform)
+
+with ctx:
+    fft.from_cli(opt)
+    if hasattr(opt, 'fft_backends'):
+        if (opt.fft_backends[0] == 'fftw'):
+            fft.fftw.set_measure_level(0)
+    # Create the problem instance:
+    ourprob = prob_class(opt.sample_rate, opt.segment_length)
+    # Find the planning time:
+    ourprob.setup()
+    while True:
+        ourprob.execute()
+
