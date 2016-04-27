@@ -87,4 +87,4 @@ def parse_problem(waveformstr='spa'):
     should usually be followed by:
         MyProblem = MyClass(srate, seglen)
     """
-    return _class_dict[method]
+    return _class_dict[waveformstr]
