@@ -78,8 +78,9 @@ prob_class = parse_problem(opt.waveform)
 with ctx:
     fft.from_cli(opt)
     if hasattr(opt, 'fft_backends'):
-        if (opt.fft_backends[0] == 'fftw'):
-            fft.fftw.set_measure_level(0)
+        if len(opt.fft_backends) > 1:
+            if (opt.fft_backends[0] == 'fftw'):
+                fft.fftw.set_measure_level(0)
     # Create the problem instance:
     ourprob = prob_class(opt.sample_rate, opt.segment_length)
     # Find the planning time:
