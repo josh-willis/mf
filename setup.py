@@ -16,8 +16,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+try:
+    from setuptools.command.install import install as _install
+    from setuptools.command.install_egg_info import install_egg_info as egg_info
+except:
+    from distutils.command.install import install as _install
+
 from distutils.core import setup
-from distutils.command.install import install as _install
 from distutils.file_util import write_file
 import os
 
