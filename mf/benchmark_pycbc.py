@@ -15,6 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import multibench as _mb
+from multibench import time as _time
 from pycbc.types import zeros, complex64, float32, complex128, float64
 from pycbc import scheme as _scheme
 from pycbc.filter.matchedfilter import Correlator
@@ -37,19 +38,23 @@ filtering components.
 
 class IFFT(object):
     def __init__(self, invec, outvec):
+        start_time = _time.time()
         self.obj = pycbc.fft.IFFT(invec, outvec)
+        self.setup_time = _time.time() - start_time
         self.execute = self.obj.execute
 
     def _setup(self):
-        self.execute()
+        pass
 
 class FFT(object):
     def __init__(self, invec, outvec):
+        start_time = _time.time()
         self.obj = pycbc.fft.FFT(invec, outvec)
+        self.setup_time = _time.time() - start_time
         self.execute = self.obj.execute
 
     def _setup(self):
-        self.execute()
+        pass
 
 class BaseFFTProblem(_mb.MultiBenchProblem):
     def __init__(self, size, dtype):
@@ -118,6 +123,7 @@ class FFTSingle(BaseFFTProblem):
         super(FFTSingle, self).__init__(size, dtype=complex64)
         self.fftobj = FFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
+        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class FFTDouble(BaseFFTProblem):
@@ -125,6 +131,7 @@ class FFTDouble(BaseFFTProblem):
         super(FFTDouble, self).__init__(size, dtype=complex128)
         self.fftobj = FFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
+        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class IFFTSingle(BaseFFTProblem):
@@ -132,6 +139,7 @@ class IFFTSingle(BaseFFTProblem):
         super(IFFTSingle, self).__init__(size, dtype=complex64)
         self.fftobj = IFFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
+        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class IFFTDouble(BaseFFTProblem):
@@ -139,6 +147,7 @@ class IFFTDouble(BaseFFTProblem):
         super(IFFTDouble, self).__init__(size, dtype=complex128)
         self.fftobj = IFFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
+        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class OldCorrFFT(BaseProblem):
