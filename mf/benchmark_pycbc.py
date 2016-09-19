@@ -65,6 +65,10 @@ class BaseFFTProblem(_mb.MultiBenchProblem):
         self.invec = zeros(self.size, dtype=self.dtype)
         self.outvec = zeros(self.size, dtype=self.dtype)
 
+    def setup(self):
+        self.setup_time = self.fftobj.setup_time
+
+
 class BaseProblem(_mb.MultiBenchProblem):
     def __init__(self, size):
         # We'll do some arithmetic with these, so sanity check first:
@@ -123,7 +127,6 @@ class FFTSingle(BaseFFTProblem):
         super(FFTSingle, self).__init__(size, dtype=complex64)
         self.fftobj = FFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
-        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class FFTDouble(BaseFFTProblem):
@@ -131,7 +134,6 @@ class FFTDouble(BaseFFTProblem):
         super(FFTDouble, self).__init__(size, dtype=complex128)
         self.fftobj = FFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
-        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class IFFTSingle(BaseFFTProblem):
@@ -139,7 +141,6 @@ class IFFTSingle(BaseFFTProblem):
         super(IFFTSingle, self).__init__(size, dtype=complex64)
         self.fftobj = IFFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
-        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class IFFTDouble(BaseFFTProblem):
@@ -147,7 +148,6 @@ class IFFTDouble(BaseFFTProblem):
         super(IFFTDouble, self).__init__(size, dtype=complex128)
         self.fftobj = IFFT(self.invec, self.outvec)
         self.execute = self.fftobj.execute
-        self.setup_time = self.fftobj.setup_time
         self._setup = self.fftobj._setup
 
 class OldCorrFFT(BaseProblem):
