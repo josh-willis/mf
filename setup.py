@@ -77,6 +77,8 @@ setup (
                'bin/thresh_timing',
                'bin/pycbc_timing',
                'bin/pycbc_dummy',
-               'bin/print_fftw_libs'
+               'bin/print_fftw_libs',
+               'bin/fftw-fft-timing.sh',
+               'bin/mkl-fft-timing.sh'
         ]
     )
