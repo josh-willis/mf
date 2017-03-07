@@ -23,6 +23,21 @@ if [ -z ${PRECISION} ]; then
     exit 1;
 fi
 
+if [ -z ${MBWAIT} ]; then
+    echo "Error: MBWAIT is not set; it must be the number of seconds to wait between starting dummy jobs";
+    exit 1;
+fi
+
+if [ -z ${MBREPEAT} ]; then
+    echo "Error: MBREPEAT is not set; it must be the number of times to repeat the test";
+    exit 1;
+fi
+
+if [ -z ${MBTIME} ]; then
+    echo "Error: MBTIME is not set; it must be the number of seconds to try to ensure each FFT loop lasts";
+    exit 1;
+fi
+
 if [ -z ${CPULIST+x} ]; then
     echo "Error: CPULIST is unset. You must set this variable to be a comma-delimited list of all cores to run together,"
     echo "with spaces separating the lists for different groups"
@@ -67,18 +82,16 @@ echo "" >> $logfile
 echo "CPU flags from /proc/cpuinfo:" >> $logfile
 cat /proc/cpuinfo | grep flags | uniq >> $logfile
 
-#exit 0
-
 echo "" >> $logfile
 echo "*****************************************************" >> $logfile
 echo " MKL Benchmarks " >> $logfile
 echo "*****************************************************" >> $logfile
 
-many_problem_bench --mbench-nthreads-env-name PYCBC_NUM_THREADS --mbench-wait-time 30 --mbench-cpu-affinity-list \
+many_problem_bench --mbench-nthreads-env-name PYCBC_NUM_THREADS --mbench-wait-time ${MBWAIT} --mbench-cpu-affinity-list \
 ${CPULIST} --clear-cache \
 --mbench-timing-program pycbc_timing --mbench-dummy-program pycbc_dummy \
 --mbench-input-file ${INPUT_FILE} \
 --mbench-output-file ${OUTPUT_DIR}/${PRECISION}-${NCPUS}cpus-${NODE}-mkl.dat \
---mbench-input-arguments problem method --mbench-time 30.0 --mbench-repeats 15 \
+--mbench-input-arguments problem method --mbench-time ${MBTIME} --mbench-repeats ${MBREPEAT} \
 --fft-backends mkl --processing-scheme mkl:env >> $logfile
 
