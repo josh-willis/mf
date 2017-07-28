@@ -88,7 +88,7 @@ echo " MKL Benchmarks " >> $logfile
 echo "*****************************************************" >> $logfile
 
 many_problem_bench --mbench-nthreads-env-name PYCBC_NUM_THREADS --mbench-wait-time ${MBWAIT} --mbench-cpu-affinity-list \
-${CPULIST} --clear-cache \
+${CPULIST} --clear-cache --mbench-bind-mem False \
 --mbench-timing-program pycbc_timing --mbench-dummy-program pycbc_dummy \
 --mbench-input-file ${INPUT_FILE} \
 --mbench-output-file ${OUTPUT_DIR}/${PRECISION}-${NCPUS}cpus-${NODE}-mkl.dat \
